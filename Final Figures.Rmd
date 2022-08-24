@@ -1,0 +1,350 @@
+---
+title: "Final Figures for MS"
+output: html_document
+date: "2022-08-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+install.packages("haven")
+install.packages("sas7bdat")
+install.packages("writexl")
+install.packages ("fmtr")
+install.packages("stringr")
+install.packages ("forcats")
+```
+
+```{r}
+library (haven)
+library (sas7bdat)
+library (readxl)
+library (writexl)
+library (tidyr)
+library (ggplot2)
+library (dplyr)
+library (magrittr)
+library (fmtr)
+library (stringr)
+library (forcats)
+library (ggplot2)
+library (common)
+library (readr)
+```
+
+
+
+#import sas dataset into r
+```{r}
+df<- read_sas("redcap.sas7bdat")
+```
+
+#read excels in for 3 figures
+#ECH barriers, ECH parent concerns, CV19 barriers
+
+```{r}
+ECHbarriers <- read_excel ("echbarriers.xlsx")
+ECHconcerns <- read_excel ("echparentconcerns.xlsx")
+CV19barriers <- read_excel ("cv19barriers.xlsx")
+ECHbarriers_ruca <- read_excel ("echbarriers_ruca.xlsx")
+ECHconcerns_ruca <- read_excel ("echparentconcerns_ruca.xlsx")
+CV19barriers_ruca <- read_excel ("cv19barriers_ruca.xlsx")
+```
+
+
+```{r}
+write_xlsx(ECHbarriers, "C:/Users/alber/OneDrive/Desktop/R/echbarriers.xlsx")
+```
+
+
+##Plot for ALL providers (not broken out by RUCA categories)
+##Early childhood barriers
+```{r, include=FALSE}
+ff <- factor (ECHbarriers$Barrier, levels = c("Not a barrier (early childhood)", "Barrier (early childhood)"))
+
+Statements <- factor (ECHbarriers$Options, levels = c( 
+                                  "Inability of our facility to schedule visits more than a month or two out", 
+                                          "Not having enough nursing or other support staff in our facility",
+                                   "Lack of automated prompts in our EHR telling us which vaccines are due or overdue for the patient",
+                                  "Transportation obstacles experienced by parents or families to get to our facility",
+                                         "Parents not knowing when to bring their child in for routine well care",
+                                
+                 
+                  "Parents choosing to delay or refuse some or all vaccines for their children"))
+                                                                      
+
+Fig2 <- ggplot(ECHbarriers, aes(x = Statements, y = Percent, fill = ff)) +
+         geom_bar(stat = "identity", alpha = 1, width = 0.5) +
+          coord_flip() +
+          scale_y_continuous(name="Percentage of Providers", labels = function (y) paste0(y, "%")) +
+    theme_minimal () +
+    scale_x_discrete(labels = function (Statements) str_wrap (Statements, width = 25)) +
+   theme(axis.text.x = element_text(face="bold", colour = "black",
+                           size=14, angle=0),
+          axis.text.y = element_text(face="bold", colour = "black",
+                           size=11, angle=0)) +
+  theme(legend.title=element_blank(),
+        legend.text = element_text (size = 10, face="bold"),
+        axis.title.y = element_blank (),
+        axis.title.x = element_text (size = 16, face = "bold")) +
+  theme (legend.position = "bottom") +
+  theme (axis.title.x = element_text (margin = margin (t=20)))+
+  theme (panel.grid.major = element_line (size = 0.5, linetype = "solid", color="grey"))+
+ scale_fill_brewer(palette = "Paired") +
+   guides (fill = guide_legend (reverse = TRUE))
+
+
+#to create pdf, but need to name ggplot plot1, so first, you would
+#do the plot1 <- ggplot.... , can also add a family = "Times" option
+#in the first line, ex. pdf ("plot1.pdf", family = "Times")
+
+pdf ("Fig2.pdf")
+Fig2
+dev.off ()
+```
+
+
+
+##Plot for ALL providers (not broken out by RUCA categories)
+##Early childhood -provider reported parental concerns
+```{r, include=FALSE}
+ff <- factor (ECHconcerns$Amount, levels = c("Not a parental concern", "Parental concern"))
+
+Statements <- factor (ECHconcerns$Options, levels = c( 
+                                  "Concern that vaccines will weaken their child's immune system",
+                 "Belief that vaccines are given when children are too young",
+                 "Belief that vaccine-preventable diseases are not severe enough to warrant vaccination",
+                 "Belief that their child is not at risk for vaccine-preventable diseases",
+                 "Concern that their child will suffer immediate, short-term side effects, including pain",
+                "General worries about vaccines without a specific concern",
+                 "Concern that their child will suffer long-term complications from vaccines",
+                 "Concern that children receive too many vaccines"))
+                                                                      
+
+Fig3 <- ggplot(ECHconcerns, aes(x = Statements, y = Percent, fill = ff)) +
+         geom_bar(stat = "identity", alpha = 1, width = 0.5) +
+          coord_flip() +
+          scale_y_continuous(name="Percentage of Providers", labels = function (y) paste0(y, "%")) +
+    theme_minimal () +
+    scale_x_discrete(labels = function (Statements) str_wrap (Statements, width = 35)) +
+   theme(axis.text.x = element_text(face="bold", colour = "black",
+                           size=14, angle=0),
+          axis.text.y = element_text(face="bold", colour = "black",
+                           size=11, angle=0)) +
+  theme(legend.title=element_blank(),
+        legend.text = element_text (size = 10, face="bold"),
+        axis.title.y = element_blank (),
+        axis.title.x = element_text (size = 16, face = "bold")) +
+  theme (legend.position = "bottom") +
+  theme (axis.title.x = element_text (margin = margin (t=20)))+
+  theme (panel.grid.major = element_line (size = 0.5, linetype = "solid", color="grey"))+
+ scale_fill_brewer(palette = "Paired") +
+   guides (fill = guide_legend (reverse = TRUE))
+
+
+#to create pdf, but need to name ggplot plot1, so first, you would
+#do the plot1 <- ggplot.... , can also add a family = "Times" option
+#in the first line, ex. pdf ("plot1.pdf", family = "Times")
+
+pdf ("Fig3.pdf")
+Fig3
+dev.off ()
+```
+
+
+##Plot for ALL providers (not broken out by RUCA categories)
+##COVID-19 barriers
+```{r, include=FALSE}
+ff <- factor (CV19barriers$Barrier, levels = c("Not a barrier (COVID-19)", "Barrier (COVID-19)"))
+
+Statements <- factor (CV19barriers$Options, levels = c( 
+  "Transportation obstacles to getting a COVID-19 vaccine",
+"Parents' or patients' fears that getting the COVID-19 vaccine will cause short-term side effects/allergic reaction",
+"Parents' or patients' beliefs that the COVID-19 vaccine is being promoted for commercial gains of pharmaceutical companies",
+"Parents' or patients' fears that getting the COVID-19 vaccine will lead to long-term health issues",
+"Parents' or patients' concerns that the COVID-19 vaccines were rapidly developed and authorized"))
+                                                                      
+
+Fig4 <- ggplot(CV19barriers, aes(x = Statements, y = Percent, fill = ff)) +
+         geom_bar(stat = "identity", alpha = 1, width = 0.5) +
+          coord_flip() +
+          scale_y_continuous(name="Percentage of Providers", labels = function (y) paste0(y, "%")) +
+    theme_minimal () +
+    scale_x_discrete(labels = function (Statements) str_wrap (Statements, width = 35)) +
+   theme(axis.text.x = element_text(face="bold", colour = "black",
+                           size=14, angle=0),
+          axis.text.y = element_text(face="bold", colour = "black",
+                           size=11, angle=0)) +
+  theme(legend.title=element_blank(),
+        legend.text = element_text (size = 10, face="bold"),
+        axis.title.y = element_blank (),
+        axis.title.x = element_text (size = 16, face = "bold")) +
+  theme (legend.position = "bottom") +
+  theme (axis.title.x = element_text (margin = margin (t=20)))+
+  theme (panel.grid.major = element_line (size = 0.5, linetype = "solid", color="grey"))+
+ scale_fill_brewer(palette = "Paired") +
+   guides (fill = guide_legend (reverse = TRUE))
+
+
+#to create pdf, but need to name ggplot plot1, so first, you would
+#do the plot1 <- ggplot.... , can also add a family = "Times" option
+#in the first line, ex. pdf ("plot1.pdf", family = "Times")
+
+pdf ("Fig4.pdf")
+Fig4
+dev.off ()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Plot for early childhood barriers, broken out by RUCA categories (metro and nonmetro)
+```{r, include=FALSE}
+ff <- factor (ECHbarriers_ruca$Barrier, levels = c("Not a barrier (early childhood)", "Barrier (early childhood)"))
+
+Fig2ruca_ech_barriers <- ggplot (ECHbarriers_ruca, aes (x=RUCA, y=Percent, fill= ff)) + 
+  geom_bar (position = "stack", stat = "identity", width = 0.8) +
+  facet_wrap (~fct_relevel (Rank, "Rank6", "Rank4", "Rank5", "Rank3", "Rank1", "Rank2"), nrow=6) +
+  
+
+  coord_flip() +
+
+          scale_y_continuous(name="Percentage of Providers", labels = function (y) paste0(y, "%")) +
+    theme_minimal () +
+   theme(axis.text.x = element_text(face="bold", colour = "black",
+                           size=14, angle=0),
+          axis.text.y = element_text(face="bold", colour = "black",
+                           size=13, angle=0)) +
+  #geom_text (aes (label=paste0 (round (Percent, 1), "%")), size = 5, hjust = 0.8) +
+  theme(legend.title=element_blank(),
+        legend.text = element_text (size = 12, face="bold"),
+        axis.title.y = element_blank (),
+        axis.title.x = element_text (size = 16, face = "bold")) +
+  theme (legend.position = "bottom") +
+  theme (axis.title.x = element_text (margin = margin (t=20)))+
+  theme (panel.grid.major = element_line (size = 0.5, linetype = "solid", color="grey"))+
+  theme (panel.spacing = unit (2,"lines")) +
+  theme (strip.text.x = element_blank () ) +
+ scale_fill_brewer(palette = "Paired") +
+   guides (fill = guide_legend (reverse = TRUE))
+
+
+pdf ("Fig2ruca_ech_barriers.pdf")
+Fig2ruca_ech_barriers
+dev.off ()
+```
+
+
+
+##Plot for early childhood parental concerns question by ruca catego of metro and nonmetro
+```{r, include=FALSE}
+ff <- factor (ECHconcerns_ruca$Amount, levels = c("Not a parental concern", "Parental concern"))
+
+
+Fig3ruca_ech_concerns <- ggplot (ECHconcerns_ruca, aes (x=RUCA, y=Percent, fill= ff)) + 
+  geom_bar (position = "stack", stat = "identity", width = 0.8) +
+  facet_wrap (~fct_relevel (Rank, "Rank6", "Rank5", "Rank8", "Rank1", "Rank3", "Rank2", "Rank7",
+                            "Rank4"), nrow=8) +
+  
+
+  coord_flip() +
+
+          scale_y_continuous(name="Percentage of Providers", labels = function (y) paste0(y, "%")) +
+    theme_minimal () +
+   theme(axis.text.x = element_text(face="bold", colour = "black",
+                           size=14, angle=0),
+          axis.text.y = element_text(face="bold", colour = "black",
+                           size=13, angle=0)) +
+  #geom_text (aes (label=paste0 (round (Percent, 1), "%")), size = 5, hjust = 0.8) +
+  theme(legend.title=element_blank(),
+        legend.text = element_text (size = 12, face="bold"),
+        axis.title.y = element_blank (),
+        axis.title.x = element_text (size = 16, face = "bold")) +
+  theme (legend.position = "bottom") +
+  theme (axis.title.x = element_text (margin = margin (t=20)))+
+  theme (panel.grid.major = element_line (size = 0.5, linetype = "solid", color="grey"))+
+  theme (panel.spacing = unit (2,"lines")) +
+  theme (strip.text.x = element_blank () ) +
+ scale_fill_brewer(palette = "Paired") +
+   guides (fill = guide_legend (reverse = TRUE)) +
+ 
+
+
+pdf ("Fig3ruca_ech_concerns.pdf")
+Fig3ruca_ech_concerns
+dev.off ()
+```
+
+
+#plot for COVID-19 barriers by RUCA categ of metro and nonmetro
+```{r, include= FALSE}
+ff <- factor (CV19barriers_ruca$Barrier, levels = c("Not a barrier (COVID-19)", "Barrier (COVID-19)"))
+
+Fig4ruca_cv19_barriers <- ggplot (CV19barriers_ruca, aes (x=RUCA, y=Percent, fill= ff)) + 
+  geom_bar (position = "stack", stat = "identity", width = 0.8) +
+  facet_wrap (~fct_relevel (Rank, "Rank2", "Rank5", "Rank3", "Rank4", "Rank1"), nrow=5) +
+  
+
+  coord_flip() +
+
+          scale_y_continuous(name="Percentage of Providers", labels = function (y) paste0(y, "%")) +
+    theme_minimal () +
+   theme(axis.text.x = element_text(face="bold", colour = "black",
+                           size=14, angle=0),
+          axis.text.y = element_text(face="bold", colour = "black",
+                           size=13, angle=0)) +
+  #geom_text (aes (label=paste0 (round (Percent, 1), "%")), size = 5, hjust = 0.8) +
+  theme(legend.title=element_blank(),
+        legend.text = element_text (size = 12, face="bold"),
+        axis.title.y = element_blank (),
+        axis.title.x = element_text (size = 16, face = "bold")) +
+  theme (legend.position = "bottom") +
+  theme (axis.title.x = element_text (margin = margin (t=20)))+
+  theme (panel.grid.major = element_line (size = 0.5, linetype = "solid", color="grey"))+
+  theme (panel.spacing = unit (2,"lines")) +
+  theme (strip.text.x = element_blank () ) +
+ scale_fill_brewer(palette = "Paired") +
+   guides (fill = guide_legend (reverse = TRUE))
+
+
+pdf ("Fig4ruca_cv19_barriers.pdf")
+Fig4ruca_cv19_barriers
+dev.off ()
+```
+
