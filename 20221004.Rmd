@@ -1,0 +1,225 @@
+---
+title: "PUBH 691 Summarizing Data"
+author: "Alexandria Albers"
+date: "2022-10-04 and OCt 6,2022"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(rio)
+library(janitor)
+library(skimr)
+library(stargazer)
+library(knitr)
+```
+
+```{r}
+# Read in the NHANES data files
+nhanes_raw <- import("input/nhanes_raw.csv") %>% 
+   clean_names() %>% 
+   mutate(across(everything()), na_if(., "")) %>%
+   mutate(across(where(is.character), as.factor))
+
+```
+
+```{r}
+#install.packages("skimr")
+
+skim(nhanes_raw)
+```
+
+```{r}
+skim(nhanes_raw$health_gen)
+
+summary(nhanes_raw$health_gen)[[2]] #putting 2 sets of brackets and number pulls an individual level of a factor
+
+summary(nhanes_raw$health_gen)[["Fair"]]
+
+skim(nhanes_raw$health_gen)[["top_counts"]]
+
+skim_output <-skim(nhanes_raw$health_gen)
+summary_output <- summary(nhanes_raw$health_gen)
+
+skim(nhanes_raw$health_gen)[["factor.top_counts"]]
+```
+
+```{r}
+table(nhanes_raw$marital_status, nhanes_raw$health_gen)
+
+table(nhanes_raw$marital_status, nhanes_raw$health_gen, useNA = "always")
+
+ftable(nhanes_raw$marital_status, nhanes_raw$health_gen, nhanes_raw$gender)
+
+#ftable is flat table - gives you nicer output for 3+ variables
+
+my_table <- table(nhanes_raw$marital_status, nhanes_raw$health_gen)
+
+my_table
+
+margin.table(my_table, 1) #comma 1 gives you freq across table for 1st variable
+margin.table(my_table, 2) #will give you for 2nd variable
+
+prop.table(my_table) #proportions/percentages within the table
+prop.table(table(nhanes_raw$marital_status, nhanes_raw$health_gen))
+
+prop.table(my_table, 1) #each row now adds to 100%
+prop.table(my_table, 2) #each column adds up to 10%
+```
+
+```{r}
+nhanes_raw %>% 
+  tabyl(education, show_na=F) %>% 
+  adorn_pct_formatting()
+
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "row") #adding total at the end, but getting column totals
+
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "col") #getting row totals by adding a col total
+
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "both")
+
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "both") %>% 
+  adorn_percentages(denominator = "row") #need to specify how you want den calculated
+                                              #for "row", each row adds up to 100%
+                                            #which needs to be specified if 2 diff vars
+
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "both") %>% 
+  adorn_percentages(denominator = "row") %>% 
+  adorn_pct_formatting()
+
+#if you want numbers and percentages
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "both") %>% 
+  adorn_percentages(denominator = "row") %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns(position = "front")
+
+#if you want to label and look nicer
+nhanes_raw %>% 
+  tabyl(education, health_gen, show_na=F) %>% 
+  adorn_totals(where = "both") %>% 
+  adorn_percentages(denominator = "row") %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns(position = "front") %>% 
+  adorn_title(row_name = "Education",
+              col_name = "General Health")
+```
+
+
+##flex table package
+##gt summary <- try this one first!
+## look at epi handbook
+##stargazer
+
+#from patrick...
+```{r}
+my_tabyl <- nhanes_raw %>% 
+  tabyl(education, health_gen, show_na = F) %>% 
+  adorn_totals(where ="both") %>% 
+  adorn_percentages(denominator = "row") %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns(position = "front") %>% 
+  adorn_title(row_name = "Education",
+              col_name = "General Health")
+
+library(stargazer)
+stargazer(my_tabyl, type = "html", out = "tabyl.html", summary = F)
+
+```
+
+```{r}
+nhanes_raw %>% 
+  summarize("N" = n(),
+            "Mean Age" = round(mean(age), digits=2),
+            "SD Age" = round(sd(age), digits=2))
+
+age_summary <- nhanes_raw %>% 
+  filter(!is.na(diabetes)) %>% 
+  group_by(diabetes) %>% 
+  summarize("n" = n(),
+            "Mean Age" = round(mean(age), digits=2),
+            "SD Age" = round(sd(age), digits=2),
+            "Min Age" = min(age),
+            "25% Age" = quantile(age, 0.25),
+            "75% Age" = quantile(age, 0.75),
+            "Median Age" = median(age),
+            "Max Age" = max(age)) %>% 
+  rename("Diabetes Status" = diabetes)
+
+age_summary
+
+#if you have specific summary stats you want, the summarize fn is the
+#best way to do this
+```
+
+
+```{r}
+age_summary_long <-age_summary %>%   #from wide dataset to longer dataset
+  pivot_longer(cols = n:'Max Age',
+               names_to = "Statistic",
+               values_to = "Result")
+
+age_summary_long
+```
+
+```{r}
+age_summary_wide <- age_summary_long %>% 
+  pivot_wider(names_from = "Statistic",
+              values_from = "Result")
+
+age_summary_wide
+```
+
+#combining columns
+```{r}
+age_summary_long2 <- age_summary_long %>% 
+  mutate(diabetes = "Diabetes") %>% 
+  unite("Health Status", diabetes, 'Diabetes Status', sep = " ") #the default is to get rid of columns that were united,
+                                                                #but could put remove=F would keep the cols in the dataset
+
+age_summary_long2
+```
+
+
+#sep col into 2
+```{r}
+age_summary_long3 <- age_summary_long2 %>% 
+  separate(col = "Health Status", into = c("Diabetes", "Diabetes Status"), sep = " ", 
+           remove = F)
+
+age_summary_long3
+```
+
+
+#Conditional Statistics
+```{r}
+bp_dia_gen_summary <- nhanes_raw %>% 
+  group_by(gender) %>% 
+  summarize("Mean SBP Diabetes" = mean(bp_sys_ave[diabetes == "Yes"], na.rm=T),   # so we do want mean SBP, but ONLY when diabetes=Y
+            "Mean SBP No Diabetes" = mean(bp_sys_ave[diabetes == "No"], na.rm=T),
+            "Mean DBP Diabetes" = mean(bp_dia_ave[diabetes =="Yes"], na.rm=T),
+            "Mean DBP No Diabetes" = mean(bp_dia_ave[diabetes =="No"], na.rm=T)) %>% 
+  rename(Gender=gender)
+
+bp_dia_gen_summary
+kable(bp_dia_gen_summary) #in knitr library
+```
+
+
