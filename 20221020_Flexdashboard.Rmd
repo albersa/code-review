@@ -1,0 +1,98 @@
+---
+title: "Flexdashboard Example"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(rio)
+library(janitor)
+library(plotly)
+
+nhanes_raw <- import("Input/nhanes_raw.csv") %>% 
+  clean_names() %>% 
+  mutate(across(everything()), na_if(., "")) %>%
+  mutate(across(where(is.character), as.factor))
+```
+
+# Page 1
+
+## Column {.tabset data-width=650}
+
+### Plot 1: Sleep Histogram
+
+```{r}
+sleep_histogram <- nhanes_raw %>% 
+  filter(!is.na(sleep_hrs_night)) %>% 
+  filter(!is.na(sleep_trouble)) %>% 
+  ggplot() + 
+  geom_histogram(aes(x = sleep_hrs_night, fill = sleep_trouble), bins = 10) +
+  theme_classic() +
+  scale_fill_manual(values = c("lightblue", "blue")) +
+  labs(title = "Hours of sleep at night and trouble sleeping",
+       subtitle = "NHANES data, 2009-2012",
+       x = "Hours of sleep at night",
+       y = "Count",
+       fill = "Sleep Trouble:") +
+  scale_x_continuous(breaks = c(seq(2, 12, 2)),
+                     labels = c(seq(2, 12, 2))) +
+  
+  scale_y_continuous(breaks = c(seq(0, 3750, 250)), 
+                     labels = c(seq(0, 3750, 250)))
+
+ggplotly(sleep_histogram)
+```
+
+
+
+
+## Column {.tabset data-width=350}
+
+
+### Plot 2 
+
+```{r}
+sbp_chol_scatter <- nhanes_raw %>% 
+  filter(!is.na(bp_sys_ave)) %>% 
+  filter(!is.na(tot_chol)) %>% 
+  ggplot(aes(x=bp_sys_ave, y=tot_chol)) + 
+  geom_point()+
+  geom_smooth() +
+  theme_bw()+
+  labs(title="Systolic Blood Pressure and Cholesterol",
+       subtitle = "NHANES data, 2009-2012",
+       x="Average Systolic Blood Pressure",
+       y="Total Cholesterol") +
+  scale_x_continuous(breaks = c(seq(75,225,25)),
+                     labels = c(seq(75,225,25))) +
+  scale_y_continuous(breaks = c(seq(1, 14, 1)), 
+                     labels = c(seq(1, 14, 1)))
+
+sbp_chol_scatter
+```
+
+### Plot 3
+
+```{r}
+diabetes_sbp_boxplot <- nhanes_raw %>% 
+  filter(!is.na(diabetes)) %>% 
+  filter(!is.na(bp_sys_ave)) %>% 
+  ggplot() + 
+  geom_boxplot(aes(x=diabetes, y=bp_sys_ave, fill = "sienna3"), width = 0.5)+
+  theme_bw()+
+  labs(title="Systolic Blood Pressure and Diabetes Status",
+       subtitle = "NHANES data, 2009-2012",
+       x="Diabetes Status",
+       y="Average Systolic Blood Pressure",
+       fill = "") +
+  theme(legend.position = "none") +
+  scale_y_continuous(breaks = c(seq(70, 240, 10)), 
+                     labels = c(seq(70, 240, 10)))
+
+diabetes_sbp_boxplot
+```
+

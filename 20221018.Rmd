@@ -1,0 +1,153 @@
+---
+title: "Reproducible Research #2"
+author: "Alexandria Albers"
+date: "2022-10-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, include=F, warning = F, message=F)
+```
+
+```{r}
+library(tidyverse)
+library(rio)
+library(janitor)
+library(knitr)
+```
+
+```{r}
+colorblind_palette <- c("#88CCEE", "#CC6677", "#DDCC77", "#117733", "#332288", 
+                        "#44AA99", "#999933", "#882255", "Black", "#661100", 
+                        "#6699CC", "#AA4499", "#888888")
+```
+
+```{r}
+# Read in the NHANES data files
+nhanes_raw <- import("input/nhanes_raw.csv") %>% 
+   clean_names() %>% 
+   mutate(across(everything()), na_if(., "")) %>%
+   mutate(across(where(is.character), as.factor))
+```
+
+```{r}
+age_summary <- nhanes_raw %>% 
+  group_by(home_own) %>% 
+  summarize(n=n(),
+            "Mean Age" = mean(age),
+            "SD Age" = sd(age),
+            "Min Age" = min(age),
+            "Median Age" = median(age),
+            "Max Age" = max(age))
+
+kable(age_summary, digits = 1)
+```
+
+```{r}
+age_plot <- nhanes_raw %>% 
+  ggplot() +
+  geom_boxplot(aes(x = home_own, y=age, fill=home_own)) +
+  theme_classic() +
+  scale_fill_manual(values = colorblind_palette) +
+  labs(title="Age by home ownership",
+       subtitle="NHANES data, 2009-2012",
+       y= "Age",
+       x= "Home Ownership",
+       fill="Home Ownership")
+
+age_plot
+```
+
+**FUNCTIONS**
+
+```{r}
+#function(input_var, grouping_var, data = )
+#Also, need open bracket at beg and closed bracket at end
+#We replaced "Age" with input_var and 2 brackets
+
+summary_function <- function(input_var, grouping_var, input_label,
+                             data=nhanes_raw)  #here, telling R what we want in our fn
+  #could just say data here and then in summary out put below, specify the dataset
+  
+{
+    
+var_summary <- data %>% 
+  filter(!is.na({{input_var}})) %>% 
+  group_by({{grouping_var}}) %>% 
+  summarize(n=n(),
+            "Mean" = mean({{input_var}}),
+            "SD" = sd({{input_var}}),
+            "Min" = min({{input_var}}),
+            "Median" = median({{input_var}}),
+            "Max" = max({{input_var}})) %>% 
+  mutate("Summary Var" = input_label)
+
+kable(var_summary, digits = 1)
+
+}
+
+
+summary_function(age, home_own, "Age") #bc we've already specified a default dataset, we don't need to specify dataset again here
+
+summary_function(weight, marital_status, "Weight") #"Weight" is just telling us these summary stats are for weight
+```
+
+**LET'S FUNCTION THE PLOT!**
+
+```{r}
+plot_function <- function(input_var, grouping_var, input_label, grouping_label,
+                             data=nhanes_raw)
+
+{  
+  
+age_plot <- data %>% 
+  ggplot() +
+  geom_boxplot(aes(x = {{grouping_var}}, y={{input_var}}, fill={{grouping_var}})) +
+  theme_classic() +
+  scale_fill_manual(values = colorblind_palette) +
+  labs(title="Age by home ownership",
+       subtitle="NHANES data, 2009-2012",
+       y= input_label,
+       x= grouping_label,
+       fill=grouping_label)
+
+age_plot
+
+}
+
+plot_function(age, home_own, "Age", "Home Ownership")
+
+#Note: when in quotes we're saying just paste that versus pulling an object from a dataset
+#The bracketed input is what tells R to go look in the dataset, which we specified in the beginning!
+```
+
+**Functions with PASTE** #NOTE: using paste() doesn't require adding spaces, but paste0 takes #out spaces
+
+```{r}
+plot_function <- function(input_var, grouping_var, input_label, grouping_label,
+                             data=nhanes_raw)
+
+{  
+  
+age_plot <- data %>% 
+  ggplot() +
+  geom_boxplot(aes(x = {{grouping_var}}, y={{input_var}}, fill={{grouping_var}})) +
+  theme_classic() +
+  scale_fill_manual(values = colorblind_palette) +
+  labs(title=paste(input_label, "by", grouping_label),
+       #title=paste0(input_label, " by ", grouping_label),
+       subtitle="NHANES data, 2009-2012",
+       y= input_label,
+       x= grouping_label,
+       fill=grouping_label)
+
+age_plot
+
+}
+
+plot_function(weight, marital_status, "Weight", "Marital Status")
+plot_function(age, home_own, "Age", "Home Ownership")
+
+#Note: when in quotes we're saying just paste that versus pulling an object from a dataset
+#The bracketed input is what tells R to go look in the dataset, which we specified in the beginning!
+```
